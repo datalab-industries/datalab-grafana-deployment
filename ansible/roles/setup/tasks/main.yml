@@ -1,0 +1,28 @@
+---
+- name: Install aptitude
+  become: true
+  ansible.builtin.apt:
+    name: aptitude
+    state: present
+    update_cache: true
+
+- name: Install required system packages (24.04)
+  become: true
+  when: ansible_distribution_version == '24.04'
+  ansible.builtin.apt:
+    pkg:
+      - ca-certificates
+      - python3-pip
+    state: present
+    update_cache: true
+
+- name: Install required system packages (22.04)
+  become: true
+  when: ansible_distribution_version == '22.04'
+  ansible.builtin.apt:
+    pkg:
+      - ca-certificates
+      - python3-pip
+      - python3.10-venv
+    state: present
+    update_cache: true

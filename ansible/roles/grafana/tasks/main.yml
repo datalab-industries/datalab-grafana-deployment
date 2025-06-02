@@ -1,0 +1,13 @@
+---
+- name: Launch grafana container
+  community.docker.docker_container:
+    name: grafana
+    image: grafana/grafana:11.4.0
+    network_mode: host
+    restart_policy: always
+    volumes:
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    env:
+      GF_SERVER_ROOT_URL: "https://grafana.datalab.industries"

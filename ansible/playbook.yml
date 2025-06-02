@@ -1,0 +1,34 @@
+---
+- name: Deploy Grafana
+  hosts: all
+  vars:
+    # root behaves differently than other users; set home dir accordingly
+    ansible_user_home_dir: "{{ '/' + ansible_ssh_user if ansible_ssh_user == 'root' else '/home/' + ansible_ssh_user }}"
+  roles:
+    - role: preflight
+      name: Check if the system is ready for the playbook
+      tags: [setup]
+    - role: setup
+      name: Run OS and disk set up tasks
+      tags: [setup]
+    - role: docker
+      name: Install and configure Docker
+      tags: [setup]
+    - role: fail2ban
+      name: Install and configure fail2ban
+      tags: [setup]
+    - role: ssl_first_run
+      name: Run stripped down nginx and SSL for the first time
+      tags: [setup, ssl]
+    - role: grafana
+      name: Build and launch Grafana
+      tags: [deploy]
+    - role: nginx
+      name: Launch nginx container with autorenewing certbot
+      tags: [setup, maintenance, ssl]
+
+  tasks:
+    - name: Keep all packages up-to-date
+      ansible.builtin.include_role:
+        name: apt_upgrade
+      tags: [maintenance]
