@@ -8,6 +8,6 @@
     volumes:
       - grafana-data:/var/lib/grafana
     ports:
-      - "3000:3000"
+      - 3000:3000
     env:
-      GF_SERVER_ROOT_URL: "https://grafana.datalab.industries"
+      GF_SERVER_ROOT_URL: https://grafana.datalab.industries
