@@ -24,6 +24,7 @@
     restart_policy: always
     volumes:
       - ./.prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
     ports:
       - 9090:9090
     command:
