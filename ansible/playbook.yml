@@ -25,7 +25,7 @@
       tags: [deploy]
     - role: nginx
       name: Launch nginx container with autorenewing certbot
-      tags: [setup, maintenance, ssl]
+      tags: [setup, maintenance, ssl, deploy]
 
   tasks:
     - name: Keep all packages up-to-date

@@ -1,4 +1,39 @@
 ---
+- name: Make config dir for prometheus
+  ansible.builtin.file:
+    path: .prometheus
+    state: directory
+    mode: "0755"
+
+- name: Render config files
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "0644"
+  loop:
+    - { src: prometheus.yml.j2, dest: .prometheus/prometheus.yml }
+    - { src: web.yml.j2, dest: .prometheus/web.yml }
+  register: prom_config_changed
+
+- name: Launch prometheus container
+  community.docker.docker_container:
+    name: prometheus
+    image: prom/prometheus:v3.6.0
+    network_mode: host
+    recreate: "{{ prom_config_changed.changed }}"
+    restart_policy: always
+    volumes:
+      - ./.prometheus:/etc/prometheus
+    ports:
+      - 9090:9090
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --web.config.file=/etc/prometheus/web.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.console.libraries=/etc/prometheus/console_libraries
+      - --web.console.templates=/etc/prometheus/consoles
+      - --web.enable-remote-write-receiver
+
 - name: Launch grafana container
   community.docker.docker_container:
     name: grafana
