@@ -262,6 +262,106 @@
       "fieldConfig": {
         "defaults": {
           "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 1,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "decbytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 13,
+        "x": 0,
+        "y": 13
+      },
+      "id": 6,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.4.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "de8hb37uebgu8b"
+          },
+          "disableTextWrap": false,
+          "editorMode": "builder",
+          "expr": "borgmatic_last_archive_original_size_bytes",
+          "fullMetaSearch": false,
+          "includeNullMetadata": true,
+          "instant": false,
+          "legendFormat": "{{datalab}}",
+          "range": true,
+          "refId": "A",
+          "useBackend": false
+        }
+      ],
+      "title": "Backups",
+      "transparent": true,
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "de8hb37uebgu8b"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
             "fixedColor": "purple",
             "mode": "palette-classic"
           },
@@ -327,7 +427,7 @@
         "h": 6,
         "w": 13,
         "x": 0,
-        "y": 13
+        "y": 19
       },
       "id": 4,
       "options": {
@@ -446,7 +546,7 @@
         "h": 6,
         "w": 13,
         "x": 0,
-        "y": 19
+        "y": 25
       },
       "id": 3,
       "options": {
@@ -522,6 +622,6 @@
   "timezone": "browser",
   "title": "datalab federation summary",
   "uid": "fezfvx25vetj4a",
-  "version": 47,
+  "version": 48,
   "weekStart": ""
 }
