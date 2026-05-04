@@ -8,6 +8,7 @@
     - .prometheus
     - .grafana/provisioning/datasources
     - .grafana/provisioning/dashboards
+    - .grafana/provisioning/alerting
     - .grafana/dashboards
 
 - name: Render prometheus config files
@@ -40,6 +41,13 @@
     dest: .grafana/dashboards/
     mode: "0644"
   register: grafana_dashboards_changed
+
+- name: Sync grafana alert provisioning files
+  ansible.builtin.copy:
+    src: alerting/
+    dest: .grafana/provisioning/alerting/
+    mode: "0644"
+  register: grafana_alerting_changed
 
 - name: Launch prometheus container
   community.docker.docker_container:
@@ -84,12 +92,13 @@
     name: grafana
     image: grafana/grafana:11.4.0
     network_mode: host
-    recreate: "{{ grafana_datasource_changed.changed or grafana_dashboard_provider_changed.changed }}"
+    recreate: "{{ grafana_datasource_changed.changed or grafana_dashboard_provider_changed.changed or grafana_alerting_changed.changed }}"
     restart_policy: always
     volumes:
       - grafana-data:/var/lib/grafana
       - ./.grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
       - ./.grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./.grafana/provisioning/alerting:/etc/grafana/provisioning/alerting:ro
       - ./.grafana/dashboards:/var/lib/grafana/dashboards:ro
     ports:
       - 3000:3000
