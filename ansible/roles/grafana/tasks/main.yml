@@ -1,11 +1,16 @@
 ---
-- name: Make config dir for prometheus
+- name: Make config dirs for prometheus and grafana
   ansible.builtin.file:
-    path: .prometheus
+    path: "{{ item }}"
     state: directory
     mode: "0755"
+  loop:
+    - .prometheus
+    - .grafana/provisioning/datasources
+    - .grafana/provisioning/dashboards
+    - .grafana/dashboards
 
-- name: Render config files
+- name: Render prometheus config files
   ansible.builtin.template:
     src: "{{ item.src }}"
     dest: "{{ item.dest }}"
@@ -14,6 +19,27 @@
     - { src: prometheus.yml.j2, dest: .prometheus/prometheus.yml }
     - { src: web.yml.j2, dest: .prometheus/web.yml }
   register: prom_config_changed
+
+- name: Render grafana datasource provisioning
+  ansible.builtin.template:
+    src: datasource.yml.j2
+    dest: .grafana/provisioning/datasources/datasources.yml
+    mode: "0644"
+  register: grafana_datasource_changed
+
+- name: Render grafana dashboard provider config
+  ansible.builtin.template:
+    src: dashboards.yml.j2
+    dest: .grafana/provisioning/dashboards/dashboards.yml
+    mode: "0644"
+  register: grafana_dashboard_provider_changed
+
+- name: Sync grafana dashboard JSON files
+  ansible.builtin.copy:
+    src: dashboards/
+    dest: .grafana/dashboards/
+    mode: "0644"
+  register: grafana_dashboards_changed
 
 - name: Launch prometheus container
   community.docker.docker_container:
@@ -58,9 +84,13 @@
     name: grafana
     image: grafana/grafana:11.4.0
     network_mode: host
+    recreate: "{{ grafana_datasource_changed.changed or grafana_dashboard_provider_changed.changed }}"
     restart_policy: always
     volumes:
       - grafana-data:/var/lib/grafana
+      - ./.grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./.grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./.grafana/dashboards:/var/lib/grafana/dashboards:ro
     ports:
       - 3000:3000
     env: "{{ grafana_env }}"
