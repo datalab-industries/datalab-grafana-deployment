@@ -259,6 +259,7 @@
         "type": "prometheus",
         "uid": "de8hb37uebgu8b"
       },
+      "description": "A fun little plot of (Backup age × size — sawtooth = healthy daily backups)",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -281,7 +282,7 @@
               "viz": false
             },
             "insertNulls": false,
-            "lineInterpolation": "linear",
+            "lineInterpolation": "smooth",
             "lineWidth": 1,
             "pointSize": 5,
             "scaleDistribution": {
@@ -307,8 +308,7 @@
                 "value": null
               }
             ]
-          },
-          "unit": "decbytes"
+          }
         },
         "overrides": []
       },
@@ -339,8 +339,8 @@
             "uid": "de8hb37uebgu8b"
           },
           "disableTextWrap": false,
-          "editorMode": "builder",
-          "expr": "borgmatic_last_archive_original_size_bytes",
+          "editorMode": "code",
+          "expr": "((time() - borgmatic_last_success_timestamp_seconds) / 3600) * ( borgmatic_last_archive_original_size_bytes / borgmatic_last_archive_original_size_bytes offset 24h)",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "instant": false,
@@ -350,7 +350,7 @@
           "useBackend": false
         }
       ],
-      "title": "Backups",
+      "title": "Time since backup sawtooth with backup ratio envelope",
       "transparent": true,
       "type": "timeseries"
     },
@@ -622,6 +622,6 @@
   "timezone": "browser",
   "title": "datalab federation summary",
   "uid": "fezfvx25vetj4a",
-  "version": 48,
+  "version": 49,
   "weekStart": ""
 }
