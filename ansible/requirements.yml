@@ -8,6 +8,3 @@ collections:
     version: 12.6.0
   - name: community.crypto
     version: 3.2.0
-roles:
-  - name: borgbase.ansible_role_borgbackup
-    version: 1.0.1
