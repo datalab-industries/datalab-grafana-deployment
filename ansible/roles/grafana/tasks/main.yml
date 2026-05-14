@@ -1,4 +1,8 @@
 ---
+- name: Load vaulted prometheus basic auth users
+  ansible.builtin.include_vars:
+    file: "{{ playbook_dir }}/vaults/prometheus_basic_auth.yml"
+
 - name: Make config dirs for prometheus and grafana
   ansible.builtin.file:
     path: "{{ item }}"
