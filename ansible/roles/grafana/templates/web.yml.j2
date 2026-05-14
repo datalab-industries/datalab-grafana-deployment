@@ -1,0 +1,4 @@
+basic_auth_users:
+{% for user, password_hash in prometheus_basic_auth_users.items() %}
+    {{ user }}: {{ password_hash }}
+{% endfor %}
