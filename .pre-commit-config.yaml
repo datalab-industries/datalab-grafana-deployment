@@ -3,7 +3,7 @@ exclude: ^src/.*|^ansible/vaults/.*
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
@@ -15,9 +15,9 @@ repos:
       - id: mixed-line-ending
 
   - repo: https://github.com/ansible/ansible-lint
-    rev: v24.5.0
+    rev: v26.4.0
     hooks:
       - id: ansible-lint
         additional_dependencies:
-          - ansible
+          - ansible-core ~= 2.17
         args: [--fix]
