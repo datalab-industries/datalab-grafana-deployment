@@ -53,6 +53,4 @@ jobs:
         run: ansible-galaxy install -r ansible/requirements.yml
 
       - name: Syntax-check playbook
-        run: ansible-playbook --syntax-check -i ansible/inventory.yml ansible/playbook.yml
-        env:
-          ANSIBLE_VAULT_PASSWORD_FILE: /dev/null
+        run: ansible-playbook --syntax-check -i localhost, ansible/playbook.yml
