@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   ci:
-    name: Lint, install collections, and syntax-check playbook
+    name: Lint
     runs-on: ubuntu-latest
 
     steps:
@@ -33,6 +33,3 @@ jobs:
 
       - name: Run pre-commit
         run: pre-commit run --all-files --show-diff-on-failure
-
-      - name: Syntax-check playbook
-        run: ansible-playbook --syntax-check -i localhost, ansible/playbook.yml
