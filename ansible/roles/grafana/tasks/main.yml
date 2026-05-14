@@ -50,12 +50,48 @@
     mode: "0644"
   register: grafana_alerting_changed
 
+- name: Sync prometheus image build context
+  ansible.posix.synchronize:
+    src: prometheus-image/
+    dest: .prometheus-image/
+    delete: true
+  register: prometheus_image_context_changed
+
+- name: Sync grafana image build context
+  ansible.posix.synchronize:
+    src: grafana-image/
+    dest: .grafana-image/
+    delete: true
+  register: grafana_image_context_changed
+
+- name: Build prometheus image
+  community.docker.docker_image:
+    name: datalab-prometheus
+    source: build
+    state: present
+    force_source: "{{ prometheus_image_context_changed.changed }}"
+    build:
+      path: .prometheus-image
+      pull: true
+  register: prometheus_image_built
+
+- name: Build grafana image
+  community.docker.docker_image:
+    name: datalab-grafana
+    source: build
+    state: present
+    force_source: "{{ grafana_image_context_changed.changed }}"
+    build:
+      path: .grafana-image
+      pull: true
+  register: grafana_image_built
+
 - name: Launch prometheus container
   community.docker.docker_container:
     name: prometheus
-    image: prom/prometheus:v3.6.0
+    image: datalab-prometheus
     network_mode: host
-    recreate: "{{ grafana_prom_config_changed.changed }}"
+    recreate: "{{ grafana_prom_config_changed.changed or prometheus_image_built.changed }}"
     restart_policy: always
     volumes:
       - ./.prometheus:/etc/prometheus
@@ -91,9 +127,9 @@
 - name: Launch grafana container
   community.docker.docker_container:
     name: grafana
-    image: grafana/grafana:11.4.0
+    image: datalab-grafana
     network_mode: host
-    recreate: "{{ grafana_datasource_changed.changed or grafana_dashboard_provider_changed.changed or grafana_dashboards_changed.changed or grafana_alerting_changed.changed }}"
+    recreate: "{{ grafana_datasource_changed.changed or grafana_dashboard_provider_changed.changed or grafana_dashboards_changed.changed or grafana_alerting_changed.changed or grafana_image_built.changed }}"
     restart_policy: always
     volumes:
       - grafana-data:/var/lib/grafana

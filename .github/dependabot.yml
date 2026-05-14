@@ -1,0 +1,16 @@
+version: 2
+updates:
+  - package-ecosystem: docker
+    directory: /ansible/roles/grafana/files/grafana-image
+    schedule:
+      interval: monthly
+
+  - package-ecosystem: docker
+    directory: /ansible/roles/grafana/files/prometheus-image
+    schedule:
+      interval: monthly
+
+  - package-ecosystem: docker
+    directory: /ansible/roles/nginx/files
+    schedule:
+      interval: monthly
