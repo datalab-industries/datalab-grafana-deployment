@@ -36,10 +36,11 @@
   register: grafana_dashboard_provider_changed
 
 - name: Sync grafana dashboard JSON files
-  ansible.builtin.copy:
+  ansible.posix.synchronize:
     src: dashboards/
     dest: .grafana/dashboards/
-    mode: "0644"
+    delete: true
+    recursive: true
   register: grafana_dashboards_changed
 
 - name: Sync grafana alert provisioning files
@@ -92,7 +93,7 @@
     name: grafana
     image: grafana/grafana:11.4.0
     network_mode: host
-    recreate: "{{ grafana_datasource_changed.changed or grafana_dashboard_provider_changed.changed or grafana_alerting_changed.changed }}"
+    recreate: "{{ grafana_datasource_changed.changed or grafana_dashboard_provider_changed.changed or grafana_dashboards_changed.changed or grafana_alerting_changed.changed }}"
     restart_policy: always
     volumes:
       - grafana-data:/var/lib/grafana
