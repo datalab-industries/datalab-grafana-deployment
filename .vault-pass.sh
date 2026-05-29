@@ -1,3 +1,3 @@
 #!/bin/bash
 
-bw get password 'grafana ansible'
+rbw get 'grafana ansible'
