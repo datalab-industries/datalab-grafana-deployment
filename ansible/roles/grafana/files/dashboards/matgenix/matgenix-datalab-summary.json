@@ -581,7 +581,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "code",
-          "expr": "irate(container_cpu_user_seconds_total{id=\"/\", image=\"\", datalab=\"avnos\"}[5m]) * 100",
+          "expr": "100 * (1 - avg by (datalab) (rate(node_cpu_seconds_total{mode=\"idle\", datalab=\"avnos\"}[5m])))",
           "fullMetaSearch": false,
           "hide": false,
           "includeNullMetadata": true,
