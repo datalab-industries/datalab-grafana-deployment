@@ -1,0 +1,8 @@
+# This file was edited with the assistance of an AI model and requires human review from the contributor.
+---
+# How often each datalab URL is probed by the blackbox exporter
+grafana_uptime_probe_interval: 60s
+
+# datalab deployments to monitor; the real list is set in the (vaulted)
+# inventory, see README
+grafana_datalabs: []

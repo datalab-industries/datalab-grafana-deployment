@@ -2,4 +2,33 @@ global:
     scrape_interval: 15s
     evaluation_interval: 15s
 
-scrape_configs: []
+scrape_configs:
+    # Uptime probes of each datalab app/API via the local blackbox exporter
+    - job_name: uptime
+      scrape_interval: {{ grafana_uptime_probe_interval }}
+      scrape_timeout: 15s
+      metrics_path: /probe
+      params:
+          module: [http_2xx]
+      static_configs:
+{% for target in grafana_datalabs %}
+{% if target.app_url is defined %}
+          - targets: ["{{ target.app_url }}"]
+            labels:
+                datalab: "{{ target.datalab }}"
+                component: app
+{% endif %}
+{% if target.api_url is defined %}
+          - targets: ["{{ target.api_url | regex_replace('/+$', '') }}/healthcheck/is_ready"]
+            labels:
+                datalab: "{{ target.datalab }}"
+                component: api
+{% endif %}
+{% endfor %}
+      relabel_configs:
+          - source_labels: [__address__]
+            target_label: __param_target
+          - source_labels: [__param_target]
+            target_label: instance
+          - target_label: __address__
+            replacement: 127.0.0.1:9115
