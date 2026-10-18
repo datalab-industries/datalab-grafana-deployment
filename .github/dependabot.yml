@@ -14,3 +14,8 @@ updates:
     directory: /ansible/roles/nginx/files
     schedule:
       interval: monthly
+
+  - package-ecosystem: docker
+    directory: /ansible/roles/grafana/files/blackbox-image
+    schedule:
+      interval: monthly

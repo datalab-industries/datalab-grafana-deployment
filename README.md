@@ -1,3 +1,4 @@
+<!-- This file was edited with the assistance of an AI model and requires human review from the contributor. -->
 <div align="center">
 
 # *datalab* Grafana
@@ -9,6 +10,7 @@ Ansible playbook that deploys the monitoring stack for the federated [*datalab*]
 Stack components include:
 
 - Prometheus,
+- Prometheus blackbox exporter (uptime probes),
 - Grafana (with provisioned dashboards, datasources and alert rules),
 - nginx + Let's Encrypt,
 - fail2ban.
@@ -33,12 +35,63 @@ The default dashboard surfaces a per-instance view of:
 - **Root and data filesystem usage** — free space on `/` and `/data`.
 - **Memory and CPU usage** — basic node-exporter metrics.
 
+A second `datalab deployment` dashboard shows a single deployment at a time
+(picked from the `datalab` dropdown, which lists every `datalab` label currently
+in Prometheus): app/API up/down status, uptime over the selected time range,
+response times, HTTP status codes, TLS certificate expiry, time since last backup,
+and that deployment's disk, memory and CPU usage.
+
 The provisioned alert rules (routed to PagerDuty) cover:
 
 - **Backups** — fires if the last archive shrank by >1% relative to the previous day (corruption / truncation canary).
 - **BackupsOverdue** — fires if no successful backup has been seen for >36 hours.
 - **Root fs space** — fires when `/` drops below 10% free.
 - **Data disk space** — fires when `/data` drops below 5 GB free.
+- **Datalab down** — fires when an app or API uptime probe has not succeeded for 30 minutes.
+
+## Uptime monitoring
+
+The central host also probes each datalab's app and API over HTTPS every minute
+using the [blackbox exporter](https://github.com/prometheus/blackbox_exporter)
+(listening only on localhost), storing `probe_success`, `probe_duration_seconds`,
+`probe_http_status_code` and `probe_ssl_earliest_cert_expiry` in Prometheus.
+The app is probed at its web root and the API at `<api_url>/healthcheck/is_ready`.
+
+The datalabs to monitor are set by `grafana_datalabs` in the vaulted inventory
+(`make inventory` to edit it). This same list is used for both the uptime probes
+and the Prometheus basic auth users that the instances remote-write with:
+
+```yaml
+grafana_prometheus_password: <plaintext, used by the Grafana datasource>
+grafana_prometheus_password_hash: <bcrypt hash of the same password>
+grafana_datalabs:
+  - datalab: avnos  # must match the `datalab` label the instance remote-writes
+    app_url: https://avnos-datalab.matgenix.com
+    api_url: https://avnos-datalab-api.matgenix.com
+    prometheus_user: avnos-datalab
+    prometheus_password_hash: <bcrypt hash of that instance's prometheus_password>
+```
+
+Prometheus only stores bcrypt hashes, so the plaintext passwords stay in each
+instance's own inventory. A hash can be generated with, e.g.,
+`htpasswd -nBC 12 "" | tr -d ':\n'`.
+Each `prometheus_user` becomes a basic auth user in Prometheus's `web.yml`; the
+playbook refuses to deploy if `grafana_prometheus_password_hash` is unset or an
+entry has a `prometheus_user` without a `prometheus_password_hash`, as an empty
+user list would leave Prometheus unauthenticated.
+
+Either URL can be omitted to only probe the other (or both, for an instance that
+only writes metrics); the role default is an empty list.
+
+The `datalab` value must be the same `datalab` label the instance already sends
+(`datalab_prefix`, or `app_url` if that is unset, in datalab-ansible-terraform),
+so the probe results show up next to the rest of that deployment's metrics.
+To check that every deployment sending metrics also has a probe, run this in
+Prometheus; it lists any `datalab` that has no probe:
+
+```promql
+group by (datalab) (up{job="node-exporter"}) unless group by (datalab) (probe_success)
+```
 
 ## Scoped collaborator dashboards
 
@@ -64,3 +117,18 @@ user's role plus folder permissions:
 
 Both steps are done in the Grafana UI (or via a separate user/permissions
 config); they are not part of this repo's file-based provisioning.
+
+## Deploying
+
+The [`Makefile`](Makefile) wraps `ansible-playbook` with the inventory and vault
+password:
+
+- `make install-ansible` sets up a virtualenv with Ansible and the required collections,
+- `make` runs the whole playbook, and `make <tag>` (e.g., `make deploy`) runs only that tag (`make list` shows them all),
+- `make inventory` edits the vaulted inventory, `make vaults` picks any vault file to edit, and `make encrypt-vaults` encrypts all of them.
+
+If [rbw](https://github.com/doy/rbw) is installed, the vault password is read
+from Bitwarden by [`.vault-pass.sh`](.vault-pass.sh), which looks for an entry
+named after the git remote (`datalab-industries/datalab-grafana-deployment`, then
+`datalab-grafana-deployment`, then the legacy `grafana ansible`), and asks for the
+password if none is found. Without rbw, `make` asks for the vault password.

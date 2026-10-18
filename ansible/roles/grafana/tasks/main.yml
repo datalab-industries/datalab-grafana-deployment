@@ -1,7 +1,15 @@
+# This file was edited with the assistance of an AI model and requires human review from the contributor.
 ---
-- name: Load vaulted prometheus basic auth users
-  ansible.builtin.include_vars:
-    file: "{{ playbook_dir }}/vaults/prometheus_basic_auth.yml"
+# An empty basic_auth_users would leave prometheus (and its remote-write
+# endpoint) open, so refuse to render it without credentials
+- name: Check prometheus basic auth users are configured
+  ansible.builtin.assert:
+    that:
+      - grafana_prometheus_password_hash is defined
+      - grafana_datalabs | selectattr('prometheus_user', 'defined') | rejectattr('prometheus_password_hash', 'defined') | list | length == 0
+    fail_msg: >-
+      Set grafana_prometheus_password_hash, and prometheus_password_hash for every
+      entry in grafana_datalabs that has a prometheus_user
 
 - name: Make config dirs for prometheus and grafana
   ansible.builtin.file:
@@ -10,6 +18,7 @@
     mode: "0755"
   loop:
     - .prometheus
+    - .blackbox
     - .grafana/provisioning/datasources
     - .grafana/provisioning/dashboards
     - .grafana/provisioning/alerting
@@ -24,6 +33,13 @@
     - { src: prometheus.yml.j2, dest: .prometheus/prometheus.yml }
     - { src: web.yml.j2, dest: .prometheus/web.yml }
   register: grafana_prom_config_changed
+
+- name: Copy blackbox exporter config
+  ansible.builtin.copy:
+    src: blackbox/config.yml
+    dest: .blackbox/config.yml
+    mode: "0644"
+  register: grafana_blackbox_config_changed
 
 - name: Render grafana datasource provisioning
   ansible.builtin.template:
@@ -61,6 +77,13 @@
     delete: true
   register: prometheus_image_context_changed
 
+- name: Sync blackbox exporter image build context
+  ansible.posix.synchronize:
+    src: blackbox-image/
+    dest: .blackbox-image/
+    delete: true
+  register: blackbox_image_context_changed
+
 - name: Sync grafana image build context
   ansible.posix.synchronize:
     src: grafana-image/
@@ -79,6 +102,17 @@
       pull: true
   register: prometheus_image_built
 
+- name: Build blackbox exporter image
+  community.docker.docker_image:
+    name: datalab-blackbox-exporter
+    source: build
+    state: present
+    force_source: "{{ blackbox_image_context_changed.changed }}"
+    build:
+      path: .blackbox-image
+      pull: true
+  register: blackbox_image_built
+
 - name: Build grafana image
   community.docker.docker_image:
     name: datalab-grafana
@@ -89,6 +123,21 @@
       path: .grafana-image
       pull: true
   register: grafana_image_built
+
+# Only listen on localhost: an exposed blackbox exporter can be used to make
+# arbitrary outbound requests from this host
+- name: Launch blackbox exporter container
+  community.docker.docker_container:
+    name: blackbox-exporter
+    image: datalab-blackbox-exporter
+    network_mode: host
+    recreate: "{{ grafana_blackbox_config_changed.changed or blackbox_image_built.changed }}"
+    restart_policy: always
+    volumes:
+      - ./.blackbox/config.yml:/etc/blackbox_exporter/config.yml:ro
+    command:
+      - --config.file=/etc/blackbox_exporter/config.yml
+      - --web.listen-address=127.0.0.1:9115
 
 - name: Launch prometheus container
   community.docker.docker_container:

@@ -1,4 +1,5 @@
 basic_auth_users:
-{% for user, password_hash in prometheus_basic_auth_users.items() %}
-    {{ user }}: {{ password_hash }}
+    grafana: "{{ grafana_prometheus_password_hash }}"
+{% for datalab in grafana_datalabs if datalab.prometheus_user is defined %}
+    {{ datalab.prometheus_user }}: "{{ datalab.prometheus_password_hash }}"
 {% endfor %}
