@@ -35,11 +35,17 @@ The default dashboard surfaces a per-instance view of:
 - **Root and data filesystem usage** — free space on `/` and `/data`.
 - **Memory and CPU usage** — basic node-exporter metrics.
 
-A second `datalab deployment` dashboard shows a single deployment at a time
-(picked from the `datalab` dropdown, which lists every `datalab` label currently
-in Prometheus): app/API up/down status, uptime over the selected time range,
-response times, HTTP status codes, TLS certificate expiry, time since last backup,
-and that deployment's disk, memory and CPU usage.
+Each datalab in `grafana_datalabs` (see [Uptime monitoring](#uptime-monitoring))
+also gets its own dashboard, with every query pinned to that datalab: app/API
+up/down status, uptime over the selected time range, response times, HTTP status
+codes, TLS certificate expiry, time since last backup, and that deployment's
+disk, memory and CPU usage. It is placed in the Grafana folder named by the
+entry's optional `folder` key, or a folder named after the datalab if unset, so
+it can be shared with that datalab's users (see
+[Scoped collaborator dashboards](#scoped-collaborator-dashboards)).
+These dashboards are rendered from
+`ansible/roles/grafana/files/datalab-dashboard/dashboard.json`, where
+`__DATALAB__` is replaced by the datalab name.
 
 The provisioned alert rules (routed to PagerDuty) cover:
 
@@ -70,6 +76,7 @@ grafana_datalabs:
     api_url: https://avnos-datalab-api.matgenix.com
     prometheus_user: avnos-datalab
     prometheus_password_hash: <bcrypt hash of that instance's prometheus_password>
+    # folder: <name>  # optional Grafana folder for its dashboard; defaults to `datalab`
 ```
 
 Prometheus only stores bcrypt hashes, so the plaintext passwords stay in each
@@ -101,6 +108,15 @@ To give an external collaborator a view onto only their own instances, drop a
 dashboard into a dedicated folder with every PromQL target pinned to specific
 `datalab` instance label values, e.g. `datalab=~"instance-a|instance-b"`. This
 keeps the panels scoped to a selected subset rather than the whole federation.
+The generated per-datalab dashboards already follow this pattern: set an entry's
+`folder` to put its dashboard alongside any hand-written ones for the same
+collaborator (both providers' dashboards share a Grafana folder of the same name).
+
+Provisioned folders are matched to existing Grafana folders **by title**. To
+rename a folder without losing its permissions (e.g., `matgenix` → `avnos`),
+rename it in the Grafana UI *before* deploying the renamed directory or `folder`
+value; otherwise a new folder is created without the old folder's permissions,
+and the old one is left behind empty.
 
 The dashboard JSON alone does **not** enforce the access boundary — it only
 controls what the panels query. In OSS Grafana there are no per-datasource

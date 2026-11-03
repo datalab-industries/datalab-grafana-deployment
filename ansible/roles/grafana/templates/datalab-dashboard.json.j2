@@ -1,0 +1,2 @@
+{# This file was edited with the assistance of an AI model and requires human review from the contributor. #}
+{{ lookup('ansible.builtin.file', 'datalab-dashboard/dashboard.json') | replace('__DATALAB__', item.datalab) | from_json | to_nice_json(indent=2) }}
