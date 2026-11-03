@@ -11,6 +11,17 @@
       Set grafana_prometheus_password_hash, and prometheus_password_hash for every
       entry in grafana_datalabs that has a prometheus_user
 
+# These names end up in file paths, PromQL selectors and dashboard UIDs
+- name: Check datalab names and folders are safe to use
+  ansible.builtin.assert:
+    that:
+      - item.datalab is match('^[A-Za-z0-9_-]{1,32}$')
+      - item.folder | default(item.datalab) is match('^[A-Za-z0-9_ -]+$')
+    fail_msg: "datalab names may only contain letters, digits, '-' and '_' (max 32 chars); folders may also contain spaces"
+  loop: "{{ grafana_datalabs }}"
+  loop_control:
+    label: "{{ item.datalab }}"
+
 - name: Make config dirs for prometheus and grafana
   ansible.builtin.file:
     path: "{{ item }}"
@@ -23,6 +34,7 @@
     - .grafana/provisioning/dashboards
     - .grafana/provisioning/alerting
     - .grafana/dashboards
+    - .grafana/datalab-dashboards
 
 - name: Render prometheus config files
   ansible.builtin.template:
@@ -62,6 +74,44 @@
     delete: true
     recursive: true
   register: grafana_dashboards_changed
+
+- name: Make per-datalab dashboard folders
+  ansible.builtin.file:
+    path: "{{ ansible_user_home_dir }}/.grafana/datalab-dashboards/{{ item.folder | default(item.datalab) }}"
+    state: directory
+    mode: "0755"
+  loop: "{{ grafana_datalabs }}"
+  loop_control:
+    label: "{{ item.folder | default(item.datalab) }}"
+
+# Each datalab gets its own dashboard in its `folder` (default: its own name),
+# with every query pinned to that datalab so it can be shared via folder permissions
+- name: Render per-datalab grafana dashboards
+  ansible.builtin.template:
+    src: datalab-dashboard.json.j2
+    dest: "{{ ansible_user_home_dir }}/.grafana/datalab-dashboards/{{ item.folder | default(item.datalab) }}/{{ item.datalab }}.json"
+    mode: "0644"
+  loop: "{{ grafana_datalabs }}"
+  loop_control:
+    label: "{{ item.datalab }}"
+  register: grafana_datalab_dashboards_rendered
+
+- name: Find existing per-datalab grafana dashboards
+  ansible.builtin.find:
+    paths: "{{ ansible_user_home_dir }}/.grafana/datalab-dashboards"
+    patterns: "*.json"
+    recurse: true
+  register: grafana_datalab_dashboards_found
+
+- name: Remove dashboards of datalabs no longer in the inventory (or moved folder)
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop: >-
+    {{ grafana_datalab_dashboards_found.files | map(attribute='path')
+       | reject('in', grafana_datalab_dashboards_rendered.results | map(attribute='dest'))
+       | list }}
+  register: grafana_datalab_dashboards_removed
 
 - name: Sync grafana alert provisioning files
   ansible.builtin.copy:
@@ -182,7 +232,7 @@
     name: grafana
     image: datalab-grafana
     network_mode: host
-    recreate: "{{ grafana_datasource_changed.changed or grafana_dashboard_provider_changed.changed or grafana_dashboards_changed.changed or grafana_alerting_changed.changed or grafana_image_built.changed }}"
+    recreate: "{{ grafana_datasource_changed.changed or grafana_dashboard_provider_changed.changed or grafana_dashboards_changed.changed or grafana_datalab_dashboards_rendered.changed or grafana_datalab_dashboards_removed.changed or grafana_alerting_changed.changed or grafana_image_built.changed }}"
     restart_policy: always
     volumes:
       - grafana-data:/var/lib/grafana
@@ -190,6 +240,7 @@
       - ./.grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
       - ./.grafana/provisioning/alerting:/etc/grafana/provisioning/alerting:ro
       - ./.grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - ./.grafana/datalab-dashboards:/var/lib/grafana/datalab-dashboards:ro
     ports:
       - 3000:3000
     env: "{{ grafana_env }}"

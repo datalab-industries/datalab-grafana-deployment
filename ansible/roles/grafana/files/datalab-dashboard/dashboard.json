@@ -26,29 +26,7 @@
     "uptime"
   ],
   "templating": {
-    "list": [
-      {
-        "current": {},
-        "datasource": {
-          "type": "prometheus",
-          "uid": "de8hb37uebgu8b"
-        },
-        "definition": "label_values(up, datalab)",
-        "includeAll": false,
-        "label": "datalab",
-        "name": "datalab",
-        "options": [],
-        "query": {
-          "qryType": 1,
-          "query": "label_values(up, datalab)",
-          "refId": "PrometheusVariableQueryEditor-VariableQuery"
-        },
-        "refresh": 2,
-        "regex": "",
-        "sort": 1,
-        "type": "query"
-      }
-    ]
+    "list": []
   },
   "time": {
     "from": "now-7d",
@@ -56,8 +34,8 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "datalab deployment",
-  "uid": "datalab-deployment",
+  "title": "__DATALAB__ datalab",
+  "uid": "datalab-__DATALAB__",
   "version": 1,
   "weekStart": "",
   "panels": [
@@ -134,7 +112,7 @@
             "uid": "de8hb37uebgu8b"
           },
           "editorMode": "code",
-          "expr": "probe_success{datalab=\"$datalab\",component=\"app\"}",
+          "expr": "probe_success{datalab=\"__DATALAB__\",component=\"app\"}",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -217,7 +195,7 @@
             "uid": "de8hb37uebgu8b"
           },
           "editorMode": "code",
-          "expr": "probe_success{datalab=\"$datalab\",component=\"api\"}",
+          "expr": "probe_success{datalab=\"__DATALAB__\",component=\"api\"}",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -289,7 +267,7 @@
             "uid": "de8hb37uebgu8b"
           },
           "editorMode": "code",
-          "expr": "avg_over_time(probe_success{datalab=\"$datalab\",component=\"app\"}[$__range])",
+          "expr": "avg_over_time(probe_success{datalab=\"__DATALAB__\",component=\"app\"}[$__range])",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -361,7 +339,7 @@
             "uid": "de8hb37uebgu8b"
           },
           "editorMode": "code",
-          "expr": "avg_over_time(probe_success{datalab=\"$datalab\",component=\"api\"}[$__range])",
+          "expr": "avg_over_time(probe_success{datalab=\"__DATALAB__\",component=\"api\"}[$__range])",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -432,7 +410,7 @@
             "uid": "de8hb37uebgu8b"
           },
           "editorMode": "code",
-          "expr": "min(probe_ssl_earliest_cert_expiry{datalab=\"$datalab\"} - time())",
+          "expr": "min(probe_ssl_earliest_cert_expiry{datalab=\"__DATALAB__\"} - time())",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -503,7 +481,7 @@
             "uid": "de8hb37uebgu8b"
           },
           "editorMode": "code",
-          "expr": "time() - borgmatic_last_success_timestamp_seconds{datalab=\"$datalab\"}",
+          "expr": "time() - borgmatic_last_success_timestamp_seconds{datalab=\"__DATALAB__\"}",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -590,7 +568,7 @@
             "uid": "de8hb37uebgu8b"
           },
           "editorMode": "code",
-          "expr": "probe_success{datalab=\"$datalab\"}",
+          "expr": "probe_success{datalab=\"__DATALAB__\"}",
           "instant": false,
           "legendFormat": "{{component}}",
           "range": true,
@@ -685,7 +663,7 @@
             "uid": "de8hb37uebgu8b"
           },
           "editorMode": "code",
-          "expr": "probe_duration_seconds{datalab=\"$datalab\"}",
+          "expr": "probe_duration_seconds{datalab=\"__DATALAB__\"}",
           "instant": false,
           "legendFormat": "{{component}}",
           "range": true,
@@ -780,7 +758,7 @@
             "uid": "de8hb37uebgu8b"
           },
           "editorMode": "code",
-          "expr": "probe_http_status_code{datalab=\"$datalab\"}",
+          "expr": "probe_http_status_code{datalab=\"__DATALAB__\"}",
           "instant": false,
           "legendFormat": "{{component}}",
           "range": true,
@@ -899,7 +877,7 @@
           "disableTextWrap": false,
           "editorMode": "code",
           "exemplar": false,
-          "expr": "node_filesystem_free_bytes{datalab=\"$datalab\",mountpoint=~\"/\"} / 1000000000",
+          "expr": "node_filesystem_free_bytes{datalab=\"__DATALAB__\",mountpoint=~\"/\"} / 1000000000",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "instant": false,
@@ -1018,7 +996,7 @@
             "uid": "de8hb37uebgu8b"
           },
           "editorMode": "code",
-          "expr": "node_filesystem_free_bytes{datalab=\"$datalab\",mountpoint=~\"/data\"} / 1000000000",
+          "expr": "node_filesystem_free_bytes{datalab=\"__DATALAB__\",mountpoint=~\"/data\"} / 1000000000",
           "hide": false,
           "instant": false,
           "legendFormat": "{{datalab}}",
@@ -1115,7 +1093,7 @@
         {
           "disableTextWrap": false,
           "editorMode": "code",
-          "expr": "node_memory_Active_bytes{datalab=\"$datalab\"}",
+          "expr": "node_memory_Active_bytes{datalab=\"__DATALAB__\"}",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "legendFormat": "{{datalab}}",
@@ -1242,7 +1220,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "code",
-          "expr": "100 * (1 - avg by (datalab) (rate(node_cpu_seconds_total{datalab=\"$datalab\",mode=\"idle\"}[5m])))",
+          "expr": "100 * (1 - avg by (datalab) (rate(node_cpu_seconds_total{datalab=\"__DATALAB__\",mode=\"idle\"}[5m])))",
           "fullMetaSearch": false,
           "hide": false,
           "includeNullMetadata": true,
@@ -1260,7 +1238,7 @@
           "disableTextWrap": false,
           "editorMode": "builder",
           "exemplar": false,
-          "expr": "irate(container_cpu_user_seconds_total{image!=\"\",datalab=\"$datalab\"}[5m]) * 100",
+          "expr": "irate(container_cpu_user_seconds_total{image!=\"\",datalab=\"__DATALAB__\"}[5m]) * 100",
           "fullMetaSearch": false,
           "hide": false,
           "includeNullMetadata": true,
