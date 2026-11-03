@@ -32,6 +32,8 @@ Shared in the spirit of "useful reference" rather than reuse — the inventory, 
 The default dashboard surfaces a per-instance view of:
 
 - **Backup frequency** — time since the last successful borgmatic run.
+- **Upgrade frequency** — time since unattended-upgrades last succeeded on each Ubuntu host.
+- **Deployments** — a table with a row per datalab reporting metrics: deployed datalab and playbook versions, time since the last deploy, running kernel, last successful upgrade, pending security updates, pending reboot and broken packages. A row with empty version columns has not been redeployed since version reporting was added to datalab-ansible-terraform.
 - **Root and data filesystem usage** — free space on `/` and `/data`.
 - **Memory and CPU usage** — basic node-exporter metrics.
 
@@ -39,7 +41,12 @@ Each datalab in `grafana_datalabs` (see [Uptime monitoring](#uptime-monitoring))
 also gets its own dashboard, with every query pinned to that datalab: app/API
 up/down status, uptime over the selected time range, response times, HTTP status
 codes, TLS certificate expiry, time since last backup, and that deployment's
-disk, memory and CPU usage. It is placed in the Grafana folder named by the
+disk, memory and CPU usage. A *System updates* row shows time since the last
+successful unattended upgrade, pending security updates, how long a reboot has
+been pending (the instances reboot automatically at 02:00), broken dpkg
+packages, the running kernel and OS release, and pending/held upgrades and
+kernel changes over time, and a *Deployment* row shows the deployed datalab and
+playbook versions and the time since the last deploy. It is placed in the Grafana folder named by the
 entry's optional `folder` key, or a folder named after the datalab if unset, so
 it can be shared with that datalab's users (see
 [Scoped collaborator dashboards](#scoped-collaborator-dashboards)).
@@ -51,6 +58,9 @@ The provisioned alert rules (routed to PagerDuty) cover:
 
 - **Backups** — fires if the last archive shrank by >1% relative to the previous day (corruption / truncation canary).
 - **BackupsOverdue** — fires if no successful backup has been seen for >36 hours.
+- **UpgradesOverdue** — fires if unattended-upgrades has not succeeded for >36 hours, or an Ubuntu host is not reporting apt metrics at all.
+- **BrokenPackages** — fires if dpkg has left packages half-installed or with unmet dependencies (blocks further upgrades).
+- **RebootOverdue** — fires if a reboot has been pending for >12 hours, i.e., the automatic 02:00 reboot did not happen.
 - **Root fs space** — fires when `/` drops below 10% free.
 - **Data disk space** — fires when `/data` drops below 5 GB free.
 - **Datalab down** — fires when an app or API uptime probe has not succeeded for 30 minutes.
